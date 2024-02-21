@@ -1,46 +1,47 @@
-import java.awt.*;
+import java.util.*;
 
 public class Snake {
-  public static enum Directions {
-    UP,
-    RIGHT,
-    DOWN,
-    LEFT,
-    STAY
-  }
 
-  private int cordX = 100;
-  private int cordY = 100;
-  private int size = 25;
+  private Deque<Cords> body;
+
+  private int FIELD_SIZE;
+
   private Directions direction = Directions.STAY;
 
   public Snake() {}
 
-  public Snake(int cordX, int cordY, int size) {
-    this.cordX = cordX;
-    this.cordY = cordY;
-    this.size = size;
+  public Snake(int cordX, int cordY, int fieldSize) {
+    FIELD_SIZE = fieldSize;
+    this.body = new ArrayDeque<>();
+    body.add(new Cords(cordX, cordY));
   }
 
-  public void draw(Graphics g) {
-    g.drawRect(cordX, cordY, size, size);
+  private Cords getHead() {
+    return body.getFirst();
   }
 
-  Snake move() {
-
-    switch (direction) {
-      case UP -> cordY -= size;
-      case RIGHT -> cordX += size;
-      case DOWN -> cordY += size;
-      case LEFT -> cordX -= size;
+  synchronized void move(FoodManager foodManager) {
+    var nextHead = getHead().getMovedCopy(direction, FIELD_SIZE);
+    if (body.contains(nextHead) && direction != Directions.STAY) {
+      System.exit(0);
     }
 
-    return this;
+    body.addFirst(nextHead);
+    if (!foodManager.eat(nextHead)) {
+      body.pollLast();
+    }
   }
 
-  Snake changeDirection(Directions direction) {
-    this.direction = direction;
+  void changeDirection(Directions direction) {
+    if (this.direction == Directions.UP && direction == Directions.DOWN
+        || this.direction == Directions.DOWN && direction == Directions.UP
+        || this.direction == Directions.LEFT && direction == Directions.RIGHT
+        || this.direction == Directions.RIGHT && direction == Directions.LEFT) return;
 
-    return this;
+    this.direction = direction;
+  }
+
+  List<Cords> getBody() {
+    return body.stream().toList();
   }
 }
